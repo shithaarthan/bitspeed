@@ -1,4 +1,4 @@
-# seed_db.py
+# To add some data to the dp for testing
 
 import sqlite3
 import os
