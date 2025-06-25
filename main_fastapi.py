@@ -23,6 +23,10 @@ def get_db_connection():
     finally:
         conn.close()
 
+@app.get("/")
+def read_root():
+    return {"status": "ok", "message": "Bitespeed Identity Service is running."}
+
 # The decorator now correctly uses 'IdentifyResponse' as the response_model
 @app.post("/identify", response_model=schemas.IdentifyResponse) ### THIS IS THE FIX ###
 def identify(
