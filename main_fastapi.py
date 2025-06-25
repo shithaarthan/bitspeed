@@ -1,7 +1,9 @@
-# main_fastapi.py (Schema-based version)
+# main_fastapi.py
 
 from fastapi import FastAPI, Depends, HTTPException
 import sqlite3
+
+# Make sure all imports are correct
 import crud, schemas, database
 
 # Initialize the database on startup
@@ -21,17 +23,12 @@ def get_db_connection():
     finally:
         conn.close()
 
-
-# 1. The decorator now includes `response_model` to enforce the output structure.
-# 2. The `identify` function is no longer `async`.
-# 3. The function now expects a Pydantic model `schemas.IdentifyRequest` as the body.
-@app.post("/identify", response_model=schemas.IdentifyResponse)
+# The decorator now correctly uses 'IdentifyResponse' as the response_model
+@app.post("/identify", response_model=schemas.IdentifyResponse) ### THIS IS THE FIX ###
 def identify(
-    request: schemas.IdentifyRequest, # FastAPI automatically parses and validates the body into this object
+    request: schemas.IdentifyRequest, # The request body is validated against this model
     db: sqlite3.Connection = Depends(get_db_connection)
 ):
-    # No more manual JSON parsing!
-    # We access the validated data directly from the request object.
     email = request.email
     phone_number = request.phoneNumber
 
@@ -42,10 +39,8 @@ def identify(
         )
 
     try:
+        # The result from this function matches the IdentifyResponse schema
         result = crud.identify_contact(db, email=email, phoneNumber=phone_number)
-        
-        # FastAPI automatically validates that 'result' matches the 'IdentifyResponse'
-        # schema before sending it to the client.
         return result
     except Exception as e:
         db.rollback()
