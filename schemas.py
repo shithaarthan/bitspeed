@@ -1,5 +1,3 @@
-# schemas.py
-
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 
@@ -21,8 +19,3 @@ class ContactData(BaseModel):
     phoneNumbers: List[str]
     secondaryContactIds: List[int]
 
-# Model for the final, top-level JSON response.
-# FastAPI uses this with 'response_model' to ensure our API
-# always returns data in this exact structure.
-class IdentifyResponse(BaseModel):
-    contact: ContactData
