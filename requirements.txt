@@ -1,4 +1,11 @@
-# In requirements.txt
-flask
+# requirements.txt
+
+# The web framework
 fastapi
+
+# The ASGI server to run FastAPI
 uvicorn[standard]
+
+# Pydantic is a dependency of FastAPI, but we specify [email]
+# to ensure the email validation libraries are installed.
+pydantic[email]

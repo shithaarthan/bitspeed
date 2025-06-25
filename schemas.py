@@ -1,76 +1,28 @@
-# seed_db.py
+# schemas.py
 
-import sqlite3
-import os
-from datetime import datetime, timezone
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
 
-DATABASE_FILE = "bitespeed_raw.db"
+# --- Pydantic Models for Data Validation ---
 
-def seed():
-    # --- 1. Clean up old database ---
-    if os.path.exists(DATABASE_FILE):
-        os.remove(DATABASE_FILE)
-        print(f"Removed old database file: {DATABASE_FILE}")
+# Model for the incoming request body JSON.
+# FastAPI will use this to automatically validate that:
+# - email, if provided, is a valid email format.
+# - phoneNumber, if provided, is a string.
+# - The fields are optional.
+class IdentifyRequest(BaseModel):
+    email: Optional[EmailStr] = None
+    phoneNumber: Optional[str] = None
 
-    # --- 2. Connect and create table ---
-    conn = sqlite3.connect(DATABASE_FILE)
-    cursor = conn.cursor()
+# Model for the nested "contact" object in the response.
+class ContactData(BaseModel):
+    primaryContatctId: int
+    emails: List[str]
+    phoneNumbers: List[str]
+    secondaryContactIds: List[int]
 
-    # We can reuse the init_db logic, but for a standalone script, it's fine to have it here.
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS contact (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            phoneNumber TEXT,
-            email TEXT,
-            linkedId INTEGER,
-            linkPrecedence TEXT NOT NULL CHECK(linkPrecedence IN ('primary', 'secondary')),
-            createdAt DATETIME NOT NULL,
-            updatedAt DATETIME NOT NULL,
-            deletedAt DATETIME,
-            FOREIGN KEY (linkedId) REFERENCES contact(id)
-        )
-    ''')
-    print("Database table 'contact' is ready.")
-
-    # --- 3. Insert the initial data for testing the merge scenario ---
-    
-    # First primary contact (created earlier in time)
-    contact1 = (
-        "919191",
-        "george@hillvalley.edu",
-        "primary",
-        None, # linkedId
-        # Let's make this one older
-        datetime(2023, 4, 11, 12, 0, 0, tzinfo=timezone.utc),
-        datetime(2023, 4, 11, 12, 0, 0, tzinfo=timezone.utc)
-    )
-
-    # Second primary contact (created later in time)
-    contact2 = (
-        "717171",
-        "biffsucks@hillvalley.edu",
-        "primary",
-        None, # linkedId
-        # This one is newer
-        datetime(2023, 4, 21, 10, 30, 0, tzinfo=timezone.utc),
-        datetime(2023, 4, 21, 10, 30, 0, tzinfo=timezone.utc)
-    )
-
-    insert_query = """
-        INSERT INTO contact (phoneNumber, email, linkPrecedence, linkedId, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """
-
-    cursor.execute(insert_query, contact1)
-    print(f"Inserted primary contact 1: {contact1[1]}, {contact1[0]}")
-    cursor.execute(insert_query, contact2)
-    print(f"Inserted primary contact 2: {contact2[1]}, {contact2[0]}")
-
-    # --- 4. Commit and close ---
-    conn.commit()
-    conn.close()
-    print("\nDatabase has been seeded successfully!")
-    print("Ready to run the web server and test.")
-
-if __name__ == "__main__":
-    seed()
+# Model for the final, top-level JSON response.
+# FastAPI uses this with 'response_model' to ensure our API
+# always returns data in this exact structure.
+class IdentifyResponse(BaseModel):
+    contact: ContactData
