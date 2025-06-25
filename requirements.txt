@@ -1,0 +1,4 @@
+# In requirements.txt
+flask
+fastapi
+uvicorn[standard]
